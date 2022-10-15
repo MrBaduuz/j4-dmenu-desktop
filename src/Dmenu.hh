@@ -6,6 +6,7 @@
 
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <vector>
 
 
 static
@@ -30,7 +31,7 @@ int write_proper(const int fd, const char *buf, size_t size) {
 class Dmenu
 {
 public:
-    Dmenu(const std::string &dmenu_command)
+    Dmenu(std::vector<char*> &dmenu_command)
         : dmenu_command(dmenu_command), pid(0) {
         this->create();
     }
@@ -75,11 +76,8 @@ private:
             dup2(this->inpipe[1], STDOUT_FILENO);
             dup2(this->outpipe[0], STDIN_FILENO);
 
-            static const char *shell = 0;
-            if((shell = getenv("SHELL")) == 0)
-                shell = "/bin/sh";
-
-            return execl(shell, shell, "-c", this->dmenu_command.c_str(), 0, nullptr); // double nulls are needed because of https://github.com/enkore/j4-dmenu-desktop/pull/66#issuecomment-273126739
+			char **arguments = this->dmenu_command.data();
+			return execvp(arguments[0], arguments);
         }
 
         close(this->inpipe[1]);
@@ -90,7 +88,7 @@ private:
         return true;
     }
 
-    const std::string &dmenu_command;
+	std::vector<char*>& dmenu_command;
 
     int inpipe[2];
     int outpipe[2];

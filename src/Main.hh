@@ -29,7 +29,7 @@ class Main
 {
 public:
     Main()
-        : dmenu_command("dmenu -i"), terminal("i3-sensible-terminal") {
+        : dmenu_command(), terminal("st") {
 
     }
 
@@ -129,66 +129,16 @@ private:
     }
 
     bool read_args(int argc, char **argv) {
+		this->dmenu_command.push_back((char*)"dmenu");
+		argv++;
+		while (*argv) {
+			this->dmenu_command.push_back(*argv);
+			argv++;
+		}
+		this->dmenu_command.push_back(nullptr);
+
         format_type formatter = format_type::standard;
-
-        while (true) {
-            int option_index = 0;
-            static struct option long_options[] = {
-                {"dmenu",   required_argument,  0,  'd'},
-                {"use-xdg-de",   no_argument,   0,  'x'},
-                {"term",    required_argument,  0,  't'},
-                {"help",    no_argument,        0,  'h'},
-                {"display-binary", no_argument, 0,  'b'},
-                {"no-generic", no_argument,     0,  'n'},
-                {"usage-log", required_argument,0,  'l'},
-                {"wait-on", required_argument,  0,  'w'},
-                {"no-exec", no_argument,        0,  'e'},
-                {"wrapper", required_argument,   0,  'W'},
-                {0,         0,                  0,  0}
-            };
-
-            int c = getopt_long(argc, argv, "d:t:xhb", long_options, &option_index);
-            if(c == -1)
-                break;
-
-            switch (c) {
-            case 'd':
-                this->dmenu_command = optarg;
-                break;
-            case 'x':
-                use_xdg_de = true;
-                break;
-            case 't':
-                this->terminal = optarg;
-                break;
-            case 'h':
-                this->print_usage(stderr);
-                return true;
-            case 'b':
-                formatter = format_type::with_binary_name;
-                break;
-            case 'n':
-                exclude_generic = true;
-                break;
-            case 'l':
-                usage_log = optarg;
-                break;
-            case 'w':
-                wait_on = optarg;
-                break;
-            case 'e':
-                no_exec = true;
-                break;
-            case 'W':
-                this->wrapper = optarg;
-                break;
-            default:
-                exit(1);
-            }
-        }
-
         this->appformatter = formatters[static_cast<int>(formatter)];
-
         return false;
     }
 
@@ -350,7 +300,7 @@ private:
     }
 
 private:
-    std::string dmenu_command;
+	std::vector<char*> dmenu_command;
     std::string terminal;
     std::string wrapper;
     const char *wait_on = 0;
